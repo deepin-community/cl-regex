@@ -1,0 +1,118 @@
+(documentation from: <url:http://www.geocities.com/mparker762/clawk.html>)
+
+REGEX package
+
+The regex engine is a pretty full-featured matcher, and thus is useful by
+itself. It was originally written as a prototype for a C++ matcher, though it
+has since diverged greatly.
+
+The regex compiler supports the following pattern syntax:
+
+    * ^ matches the start of a string.
+    * $ matches the end of a string.
+    * [...] denotes a character class.
+    * [^...] denotes a negated character class.
+    * [:...:] denotes a special character class.
+          o [:alpha:] == [A-Za-z]
+          o [:upper:] == [A-Z]
+          o [:lower:] == [a-z]
+          o [:digit:] == [0-9]
+          o [:alnum:] == [A-Za-z0-9]
+          o [:xdigit:] == [A-Fa-f0-9]
+          o [:space:] == whitespace
+          o [:punct:] == punctuation marks
+          o [:graph:] == printable characters other than space
+          o [:cntrl:] == control characters
+          o [:word:] == wordlike characters
+          o [^:...:] denotes a negated special character class.
+    * . matches any character.
+    * (...) delimits a regex subexpression. Also denotes a register pattern.
+    * (?...) denotes a regex subexpression that will not be captured in a register.
+    * (?=...) denotes a regex subexpression that will be used as a forward
+	lookahead. If the subexpression matches, then the rest of the match will
+	continue as if the lookahead match had not occurred (i.e. it does not consume
+	the candidate string). It will not be captured in a register, though it can
+	contain subexpressions that may be captured.
+    * (?!...) denotes a regex subexpression that will be used as a negative
+	forward lookahead (the match will continue only if the lookahead failed to
+	match). It will not be captured in a register, though it can contain
+	subexpressions that may be captured.
+    * * denotes the kleene closure of the previous regex subexpression.
+    * + denotes the positive closure of the previous regex subexpression.
+    * *? denotes the non-greedy kleene closure of the previous regex subexpression.
+    * +? denotes the non-greedy positive closure of the previous regex subexpression.
+    * ? denotes the greedy match of 0 or 1 occurrences of the previous regex subexpression.
+    * ?? denotes the non-greedy match of 0 or 1 occurrences of the previous
+	regex subexpression.
+    * \nn denotes a back-match against the contents of a previously-matched register.
+    * {nn,mm} denotes a bounded repetition.
+    * {nn,mm}? denotes a non-greedy bounded repetition.
+    * \n, \t, \r have their normal meanings.
+    * \d matches any decimal character, \D matches any nondecimal character.
+    * \w matches any wordlike character, \W matches any nonwordlike character.
+    * \s matches any whitespace character, \S matches any nonspace character.
+    * \< matches at the start of a word. \> matches at the end of a word.
+    * \<char> that character (escapes an otherwise special meaning).
+    * Special characters lose their specialness when escaped. There is a flag
+	to control this.
+    * All other characters are matched literally.
+
+There are a variety of functions in the REGEX package that allow the programmer
+to adjust the allowable regular expression syntax:
+
+    * The function ESCAPE-SPECIAL-CHARS allows you to change whether the
+	meta-characters have their magic meaning when escaped or unescaped. The default
+	behavior (per AWK syntax) is that special chars are unescaped.
+    * The function ALLOW-BACKMATCH allows you to change whether or not the \nn
+	syntax is allowed. By default it is allowed.
+    * The function ALLOW-RANGEMATCH allows you to change whether or not the the
+	{nn,mm} bounded repetition syntax is allowed. By default it is allowed.
+    * The function ALLOW-NONGREEDY-QUANTIFIERS allows you to change whether or
+	not the *?, +?, ??, and {nn,mm}? quantifiers are recognized. By default they
+	are allowed.
+    * The function ALLOW-NONREGISTER-GROUPS allows you to change whether or not
+	the (?...) syntax is recognized. By default it is allowed.
+    * The function DOT-MATCHES-NEWLINE allows you to change whether '.' in a
+	pattern matches the newline character. This is false by default.
+
+Parenthesized expressions within the pattern are considered a register pattern,
+and will be recorded for use after the match. There is an implicit set of
+parentheses around the entire expression, so the bounds of the matched text
+itself will always occupy register 0.
+
+Extensions that will be coming soon include:
+
+   1. I am working on a second backend for the regex compiler that generates an
+	even faster matcher (~4-20x faster on Symbolics, ~ 2x faster on LWW). The
+	compilation process itself is substantially slower. I've got some more work to
+	do to get the speed up even further on Lispworks, although the current system
+	is already much, much faster than GNU Regex.
+   2. Optionally allowing a negated regex pattern using the <pattern> '^'
+	syntax. This also subsumes the negated character class in that [^...] ===
+	[...]^.
+   3. Faster scans by using a possible-prefix set. This isn't real high
+	priority at the moment since matching is plenty fast already :-)
+   4. Prefix and postfix context patterns ala LEX.
+
+Regex has been recently enhanced. Everything from the parser back has been
+completely rewritten. The regex system now includes a bunch of functions for
+manipulating regex parse trees directly, a multipass optimizer and code
+generator, and a new matching engine.
+
+The new regex system does a better job of optimizing a wider range of patterns.
+It also supports an extension that allows you to provide an "accept" function
+to the match-str function. This acceptfn takes the start and end position as
+parameters, and can find the string itself in the special variable *STR* and
+the registers in the special variable *regs*. It returns either nil to force
+the matcher to backtrack, or a non-nil value which will be returned as the
+success code for the match.
+
+An additional change is that register patterns within quantified patterns now
+return the leftmost occurrence in the source string. There is a flag to force
+the more usual rightmost match, but this will reduce the applicability of many
+critical optimizations.
+
+The latest version of regex supports the Perl \d, \D, \w, \W, \s, and \S
+metasequences, as well as the egrep \< start-of-word and \> end-of-word
+metasequences.
+

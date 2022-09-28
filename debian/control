@@ -1,0 +1,14 @@
+Source: cl-regex
+Section: devel
+Priority: optional
+Maintainer: Matthew Danish <mrd@debian.org>
+Build-Depends: debhelper (>> 9.0.0)
+Standards-Version: 3.9.7
+
+Package: cl-regex
+Architecture: all
+Depends: ${misc:Depends}
+Description: Common Lisp regular expression compiler/matcher
+ A fully-featured regular expression compiler and matching engine for
+ Common Lisp that claims to be roughly 5x-20x times faster than the GNU 
+ regex matcher written in C.

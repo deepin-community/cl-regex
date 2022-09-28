@@ -1,0 +1,10 @@
+CL-REGEX for Debian
+-------------------
+
+You can run the tests in the example directory evaluating:
+
+(require :regex)
+(load "retest")
+(load "regexp-test-suite")
+(regex-test::run-tests)
+

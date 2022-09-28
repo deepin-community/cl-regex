@@ -1,0 +1,92 @@
+#!/usr/bin/make -f
+
+
+pkg	:= regex
+debpkg  := cl-regex
+
+files		:= packages.lisp gen.lisp optimize.lisp macs.lisp regex.lisp \
+		closure.lisp parser.lisp
+examples	:= regexp-test-suite.lisp retest.lisp
+docs		:= README.Debian
+
+clc-source	:= usr/share/common-lisp/source
+clc-systems	:= usr/share/common-lisp/systems
+clc-pkg		:= $(clc-source)/$(pkg)
+doc-dir		:= usr/share/doc/$(debpkg)
+
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build-arch: build
+build-indep: build
+
+build: build-stamp
+
+build-stamp: configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	# Add here commands to clean up after the build process.
+	rm -f debian/$(debpkg).postinst.* debian/$(debpkg).prerm.*
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	# Add here commands to install the package into debian/$(pkg).
+	dh_installdirs $(clc-systems) $(clc-pkg) $(doc-dir)
+	chmod 644 $(files) $(pkg).asd $(examples)
+	dh_install $(pkg).asd $(files) $(clc-pkg)
+	dh_install $(docs) $(doc-dir)
+	dh_link $(clc-pkg)/$(pkg).asd $(clc-systems)/$(pkg).asd
+
+
+# Build architecture-dependent files here.
+binary-arch: build install
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+#	dh_installdebconf	
+	dh_installdocs
+	dh_installexamples $(examples)
+	dh_link
+#	dh_installmenu
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_installinit
+#	dh_installcron
+#	dh_installman
+#	dh_installinfo
+#	dh_undocumented
+	dh_installchangelogs
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_perl
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
+
